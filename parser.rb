@@ -4,9 +4,8 @@ require 'nokogiri'
 
 require_relative 'date_parser'
 require_relative 'string'
-
-manufacturers_url = "http://www.mann-hummel.com/mf_prodkata_eur/index.html?ktlg_page=1&ktlg_lang=8"
-manufacturers_doc = Nokogiri::HTML(open(manufacturers_url)) do |config|
+mann_url = "http://www.mann-hummel.com/mf_prodkata_eur/index.html?ktlg_page=1&ktlg_lang=8"
+manufacturers_doc = Nokogiri::HTML(open(mann_url)) do |config|
   config.strict.noblanks # avoids a lot of whitespaces
 end
 
@@ -17,21 +16,20 @@ manufacturers_doc.css('select[name="ktlg_01_mrksl"] option').each do |manufactur
     puts "#{manufacturer_title}"
     
     # Retrieving manufacturers
-    models_url = "http://www.mann-hummel.com/mf_prodkata_eur/index.html?ktlg_page=1&ktlg_lang=8&ktlg_01_fzart=1&ktlg_01_fzkat=0&ktlg_01_mrksl=#{manufacturer_id}"
+    models_url = "#{mann_url}&ktlg_01_fzart=1&ktlg_01_fzkat=0&ktlg_01_mrksl=#{manufacturer_id}"
     models_doc = Nokogiri::HTML(open(models_url)) do |config|
       config.strict.noent # avoids a lot of whitespaces
     end
     
-    # models_doc.xpath('//select[@name="ktlg_01_mdrsl"]/option//text()[normalize-space()]')
     models_doc.css('select[name="ktlg_01_mdrsl"] option').each do |model|
       model_id = model['value'].to_i
       unless model_id.zero?
         model_data = model.inner_text.strip.split('|')
         model_title = model_data.first.delete_live_breakes.delete_nbsp.strip
         model_years = DateParser::normalize_range(model_data.last.strip.delete_live_breakes.delete_nbsp)
-        puts "   #{model_title}|#{model_years}"
+        puts "  #{model_title}|#{model_years}"
         
-        modifications_url = "http://www.mann-hummel.com/mf_prodkata_eur/index.html?ktlg_page=1&ktlg_lang=8&ktlg_01_fzart=1&ktlg_01_fzkat=0&ktlg_01_mrksl=#{manufacturer_id}&ktlg_01_mdrsl=#{model_id}&ktlg_c001_flag=1"
+        modifications_url = "#{mann_url}&ktlg_01_fzart=1&ktlg_01_fzkat=0&ktlg_01_mrksl=#{manufacturer_id}&ktlg_01_mdrsl=#{model_id}&ktlg_c001_flag=1"
         
         begin
           sleep 1
